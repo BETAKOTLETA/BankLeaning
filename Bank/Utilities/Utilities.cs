@@ -8,8 +8,15 @@ namespace Bank.Utilities
 {
     public static class WalletUtils
     {
-        public static bool IsAPositive(double value) => value > 0;
-
+        public static bool IsAPositive(double value)
+        {
+            if (value <= 0)
+            {
+                Console.WriteLine("Value should be positive.");
+                return false;
+            }
+            return true;
+        }
 
     }
 }
