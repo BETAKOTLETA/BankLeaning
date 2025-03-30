@@ -1,11 +1,12 @@
-﻿using Bank;
+﻿//using Bank;
 
 
-Account myAccount = new Account();
+//Account myAccount = new Account();
+//myAccount.SetPassword("123");
 
-myAccount.DepositFunds(50);
-myAccount.GetBalance();
+//myAccount.DepositFunds(50, "123");
+//myAccount.GetBalance();
 
-myAccount.WithdrawFunds(50.0);
-myAccount.GetBalance();
+//myAccount.WithdrawFunds(50.0, "234");
+//myAccount.GetBalance();
 

@@ -1,92 +1,78 @@
-﻿using Bank.Utilities;
+﻿using Bank;
+using Bank.Utilities;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
-public class Account
+public class BankAccount
 {
 
     private double balance;
 
     private string? password;
 
-    public Account()
+    public BankAccount()
     {
         balance = 0.0;
+        password = null;
     }
 
-    public void DepositFunds(double amount)
+    public void DepositFunds(double amount, string? inputpassword)
     {
-        if (!Verification())
+        var errors = new List<string>();
+        if (!Verification(inputpassword))
         {
-            Console.WriteLine("Deposit failed due to incorrect password.");
-            return;
+            errors.Add("Deposit failed due to incorrect password.");
         } 
         if (!WalletUtils.IsAPositive(amount))
         {
-            Console.WriteLine("Amount must be positive.");
-            return;
+            errors.Add("Amount must be positive.");
         }
-        else
+        if (errors.Count > 0)
         {
-            balance += amount;
-            Console.WriteLine("Successfully deposit.");
-            return;
+            throw new InvalidOperationException(string.Join(" ", errors));
         }
+         balance += amount;
+         //Console.WriteLine("Successfully deposit.");
+         return;
     }
 
-    public void WithdrawFunds(double amount)
+    public void WithdrawFunds(double amount, string? inputpassword)
     {
-        if (!Verification())
+        var errors = new List<string>();
+        if (!Verification(inputpassword))
         {
-            Console.WriteLine("Password verification failed.");
-            return;
+            errors.Add("Password verification failed.");
         }
         if (!WalletUtils.IsAPositive(amount))
         {
-            Console.WriteLine("Amount must be positive.");
-            return;
+            errors.Add("Amount must be positive.");
         }
         if (balance < amount)
         {
-            Console.WriteLine("Not enough money.");
-            return;
+            errors.Add("Not enough money.");
+        }
+        if (errors.Count > 0)
+        {
+            throw new InvalidOperationException(string.Join(" ", errors));
         }
 
         balance -= amount;
-        Console.WriteLine($"Successfully withdrew {amount}. Remaining balance: {balance}");
+        //Console.WriteLine($"Successfully withdrew {amount}. Remaining balance: {balance}");
     }
 
-    public void GetBalance()
-    {
-        Console.WriteLine(balance);
-    }
+    public double GetBalance() => balance;
+
 
     public void SetPassword(string inputPassword)
     {
         if (password == null)
         {
             password = inputPassword;
-            Console.WriteLine("The password created");
+            //Console.WriteLine("The password created");
         }
     }
 
-    public bool Verification()
+    public bool Verification(string? inputPassword)
     {
-        if(password == null)
-        {
-            Console.WriteLine("Please Create A password");
-            return false;
-        } 
-        Console.WriteLine("Please enter the password");
-        string? inputPassword = Console.ReadLine();
-
-        if (inputPassword == password)
-        {
-            Console.WriteLine("Password is correct!");
-            return true;  
-        }
-        else
-        {
-            Console.WriteLine("Incorrect password.");
-            return false;
-        }
+        return PasswordVerifier.Verify(password, inputPassword); 
     }
 }
