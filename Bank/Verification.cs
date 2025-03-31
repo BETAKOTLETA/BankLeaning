@@ -9,26 +9,31 @@ namespace Bank
     public class PasswordVerifier
     {
         private readonly string _password;
+        private readonly BankAccount _account;
 
-        public PasswordVerifier(string password)
+        public PasswordVerifier(string password, BankAccount account)
         {
             _password = password;
+            _account = account;
         }
-        public static bool Verify(string? password, string? inputPassword)
+
+        internal bool Verify(string? inputPassword)
         {
-            if (password == null)
+            var errors = new List<string>();
+
+            if (_password == null)
             {
-                Console.WriteLine("Please Create A password");
+                errors.Add("Please create a password.");
                 return false;
             }
-            if (inputPassword == password)
+
+            if (inputPassword == _password)
             {
-                Console.WriteLine("Password is correct!");
                 return true;
             }
             else
             {
-                Console.WriteLine("Incorrect password.");
+                errors.Add("Incorrect password.");
                 return false;
             }
         }

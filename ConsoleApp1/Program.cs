@@ -1,8 +1,8 @@
 ﻿//using Bank;
 
 
-//Account myAccount = new Account();
-//myAccount.SetPassword("123");
+BankAccount myAccount = new BankAccount();
+myAccount.SetPassword("123");
 
 //myAccount.DepositFunds(50, "123");
 //myAccount.GetBalance();

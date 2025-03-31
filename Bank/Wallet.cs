@@ -2,61 +2,42 @@
 using Bank.Utilities;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-public class BankAccount
+public class BankAccount 
 {
 
     private double balance;
-
-    private string? password;
+    protected string? password; // I could hash it but i'm too lazy i will do it Later
+    private TransactionManager transactionManager;
+    private PasswordVerifier passwordVerifier;
+    private bool isLocked;
 
     public BankAccount()
     {
         balance = 0.0;
         password = null;
+        isLocked = false;
+        transactionManager = new TransactionManager(this);
+        passwordVerifier = new PasswordVerifier(password ?? string.Empty, this);
     }
 
-    public void DepositFunds(double amount, string? inputpassword)
+    protected internal void AddToBalance(double amount)
     {
-        var errors = new List<string>();
-        if (!Verification(inputpassword))
-        {
-            errors.Add("Deposit failed due to incorrect password.");
-        } 
-        if (!WalletUtils.IsAPositive(amount))
-        {
-            errors.Add("Amount must be positive.");
-        }
-        if (errors.Count > 0)
-        {
-            throw new InvalidOperationException(string.Join(" ", errors));
-        }
-         balance += amount;
-         //Console.WriteLine("Successfully deposit.");
-         return;
+        balance += amount;
     }
-
-    public void WithdrawFunds(double amount, string? inputpassword)
+    protected internal void DeductFromBalance(double amount)
     {
-        var errors = new List<string>();
-        if (!Verification(inputpassword))
-        {
-            errors.Add("Password verification failed.");
-        }
-        if (!WalletUtils.IsAPositive(amount))
-        {
-            errors.Add("Amount must be positive.");
-        }
-        if (balance < amount)
-        {
-            errors.Add("Not enough money.");
-        }
-        if (errors.Count > 0)
-        {
-            throw new InvalidOperationException(string.Join(" ", errors));
-        }
-
         balance -= amount;
-        //Console.WriteLine($"Successfully withdrew {amount}. Remaining balance: {balance}");
+    }
+
+
+    public void Deposit(double amount, string? inputpassword)
+    {
+        transactionManager.DepositFundsToAccount(amount, inputpassword);
+    }
+
+    public void Withdraw(double amount, string? inputpassword)
+    {
+        transactionManager.WithdrawFundsToAccount(amount, inputpassword);
     }
 
     public double GetBalance() => balance;
@@ -67,12 +48,23 @@ public class BankAccount
         if (password == null)
         {
             password = inputPassword;
-            //Console.WriteLine("The password created");
+            passwordVerifier = new PasswordVerifier(password, this);
+            //Password is created
         }
     }
 
     public bool Verification(string? inputPassword)
     {
-        return PasswordVerifier.Verify(password, inputPassword); 
+        return passwordVerifier.Verify(inputPassword); 
+    }
+
+    public void LockTheAccount(string? inputPassword)
+    {
+        if (passwordVerifier.Verify(inputPassword)) isLocked = true;
+    }
+
+    public bool IsLocked()
+    {
+        return isLocked;
     }
 }
