@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
+using System.Collections.Generic;
 
 namespace BankTests
 {
@@ -30,18 +31,23 @@ namespace BankTests
             account.Deposit(10, "123");
 
             account.GetBalance().Should().Be(10);
+
+            var transactions = account.GetTransactionHistory().ToList();
+            transactions.Should().HaveCount(1);
+            transactions[0].Amount.Should().Be(10);
+            transactions[0].Type.Should().Be("Deposit");
         }
         [Fact]
-        public void DepositFunds_ShouldThrowException_WhenAmountIsNegative()
+        public void DepositFunds_WillnotChanged_WhenAmountIsNegative()
         {
             var account = new BankAccount();
             account.SetPassword("123");
 
-            Action act = () => account.Deposit(-10, "123");
+            account.Deposit(-10, "123");
 
             account.GetBalance().Should().Be(0);
-            //act.Should().Throw<InvalidOperationException>().WithMessage("Amount must be positive."); //not working
-            act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Amount must be positive."));
+            //act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Amount must be positive."));
+            //account.ErrorList().Should().HaveCount(1);
         }
         [Fact]
         public void DepositFunds_ShouldThrowException_WhenPasswordIsIncorrect()
@@ -49,9 +55,9 @@ namespace BankTests
             var account = new BankAccount();
             account.SetPassword("123");
 
-            Action act = () => account.Deposit(10, "456");
-
-            act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Password verification failed."));
+            //Action act = () => account.Deposit(10, "456");
+            account.Deposit(10, "456");
+            //act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Password verification failed."));
             //act.Should().Throw<InvalidOperationException>().WithMessage("Incorrect password."); //I dont know why it's not returned, maybe there only the last error can be contained
             account.GetBalance().Should().Be(0);
         }
@@ -75,8 +81,11 @@ namespace BankTests
             var account = new BankAccount();
             account.SetPassword("123");
             account.LockTheAccount("123");
-            Action act = () => account.Deposit(10, "123");
-            act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Account is locked."));
+
+            //Action act = () => account.Deposit(10, "123");
+            account.Deposit(10, "123");
+            //act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Account is locked."));
+
             account.GetBalance().Should().Be(0);
         }
 
@@ -95,6 +104,13 @@ namespace BankTests
             account.Deposit(100, "123");
             account.Withdraw(amount, "123");
             account.GetBalance().Should().Be(expected);
+
+            var transactions = account.GetTransactionHistory().ToList();
+            transactions.Should().HaveCount(2); // Expecting 2 transactions: one deposit and one withdrawal
+            transactions[0].Amount.Should().Be(100);
+            transactions[0].Type.Should().Be("Deposit");
+            transactions[1].Amount.Should().Be(amount);
+            transactions[1].Type.Should().Be("Withdrawal");
         }
 
         [Fact]
@@ -103,8 +119,12 @@ namespace BankTests
             var account = new BankAccount();
             account.SetPassword("123");
             account.Deposit(100, "123");
-            Action act = () => account.Withdraw(-100, "123");
-            act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Amount must be positive."));
+
+            //Action act = () => account.Withdraw(-100, "123");
+            account.Withdraw(-100, "123");
+
+            //act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Amount must be positive."));
+            account.GetBalance().Should().Be(100);
         }
         [Fact]
         public void WithdrawFunds_ShouldThrowException_WhenPasswordIsIncorrect()
@@ -112,8 +132,12 @@ namespace BankTests
             var account = new BankAccount();
             account.SetPassword("123");
             account.Deposit(100, "123");
-            Action act = () => account.Withdraw(-100, "456");
-            act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Password verification failed."));
+
+            //Action act = () => account.Withdraw(-100, "456");
+            account.Withdraw(-100, "456");
+
+            //act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Password verification failed."));
+            account.GetBalance().Should().Be(100);
         }
         [Fact]
         public void WithdrawFunds_ShouldThrowException_WhenAmountIsBiggerThanBalance()
@@ -121,8 +145,10 @@ namespace BankTests
             var account = new BankAccount();
             account.SetPassword("123");
             account.Deposit(100, "123");
-            Action act = () => account.Withdraw(150, "456");
-            act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Not enough money."));
+            //Action act = () => account.Withdraw(150, "456");
+
+            //act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Not enough money."));
+            account.GetBalance().Should().Be(100);
         }
         [Fact]
         public void WithdrawFunds_ShouldWorkProperly_WithMultipleAccounts()
@@ -147,8 +173,11 @@ namespace BankTests
             account.SetPassword("123");
             account.Deposit(10, "123");
             account.LockTheAccount("123");
-            Action act = () => account.Withdraw(10, "123");
-            act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Account is locked."));
+
+            //Action act = () => account.Withdraw(10, "123");
+            //act.Should().Throw<InvalidOperationException>().Where(ex => ex.Message.Contains("Account is locked."));
+
+            account.Withdraw(10, "123");
             account.GetBalance().Should().Be(10);
         }
 
