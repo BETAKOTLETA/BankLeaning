@@ -1,23 +1,26 @@
 ﻿using Bank;
 using Bank.Utilities;
+using System.Transactions;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using BankTransactionManager = Bank.TransactionManager;
+using BankTransaction = Bank;
+
 
 public class BankAccount 
 {
 
     private double balance;
-    protected string? password; // I could hash it but i'm too lazy i will do it Later
-    private TransactionManager transactionManager;
-    private PasswordVerifier passwordVerifier;
+    private string? password; // I could hash it but i'm too lazy i will do it Later
+    private BankTransactionManager transactionManager;
     private bool isLocked;
+    private readonly List<ITransaction> _transactions = new();
+    public bool IsActive { get; private set; }
 
+    public event Action<int> OnDeactivation;    
+        
     public BankAccount()
-    {
-        balance = 0.0;
-        password = null;
-        isLocked = false;
-        transactionManager = new TransactionManager(this);
-        passwordVerifier = new PasswordVerifier(password ?? string.Empty, this);
+    { 
+        transactionManager = new BankTransactionManager(this);
     }
 
     protected internal void AddToBalance(double amount)
@@ -28,7 +31,14 @@ public class BankAccount
     {
         balance -= amount;
     }
-
+    public void AddTransaction(ITransaction transaction)
+    {
+        _transactions.Add(transaction);
+    }
+    public IEnumerable<ITransaction> GetTransactionHistory()
+    {
+        return _transactions;
+    }
 
     public void Deposit(double amount, string? inputpassword)
     {
@@ -48,23 +58,28 @@ public class BankAccount
         if (password == null)
         {
             password = inputPassword;
-            passwordVerifier = new PasswordVerifier(password, this);
-            //Password is created
         }
     }
+    public string? GetPassword() => password;
 
-    public bool Verification(string? inputPassword)
-    {
-        return passwordVerifier.Verify(inputPassword); 
-    }
 
     public void LockTheAccount(string? inputPassword)
     {
-        if (passwordVerifier.Verify(inputPassword)) isLocked = true;
+        if (inputPassword != null)
+        {
+            if (WalletUtils.VerifyPassword(inputPassword, password)) isLocked = true;
+        }
     }
+
 
     public bool IsLocked()
     {
         return isLocked;
     }
+
+    private void Reactivate()
+    {
+        IsActive = true;
+    }
+
 }

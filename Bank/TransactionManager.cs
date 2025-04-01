@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
+
 
 namespace Bank
 {
@@ -17,43 +19,34 @@ namespace Bank
 
         public void DepositFundsToAccount(double amount, string? inputpassword)
         {
-            ValidateTransaction(amount, inputpassword, false);
-
+            if (inputpassword == null || !ValidateTransaction(amount, inputpassword, false))
+            {
+                return;
+            }
             _account.AddToBalance(amount);
+            _account.AddTransaction(new Transaction(amount, "Deposit"));
         }
+
         public void WithdrawFundsToAccount(double amount, string? inputpassword)
         {
-            ValidateTransaction(amount, inputpassword, true);
+            if (inputpassword == null || !ValidateTransaction(amount, inputpassword, true))
+            {
+                return;
+            }
 
             _account.DeductFromBalance(amount);
+            _account.AddTransaction(new Transaction(amount, "Withdrawal"));
         }
 
-        public void ValidateTransaction(double amount, string? inputpassword, bool isWithdrawal)
+        public bool ValidateTransaction(double amount, string? inputpassword, bool isWithdrawal)
         {
-            var errors = new List<string>();
-
-            if (!WalletUtils.IsAPositive(amount))
-            {
-                errors.Add("Amount must be positive.");
-            }
-
-            if (isWithdrawal && _account.GetBalance() < amount)
-            {
-                errors.Add("Not enough money.");
-            }
-
-            if (!_account.Verification(inputpassword))
-            {
-                errors.Add("Password verification failed.");
-            }
-            if (_account.IsLocked())
-            {
-                errors.Add("Account is locked.");
-            }
-            if (errors.Count > 0)
-            {
-                throw new InvalidOperationException(string.Join(" ", errors));
-            }
+            if (inputpassword == null) return false;
+            var accountPassword = _account.GetPassword();
+            if (accountPassword == null) return false;
+            if (!WalletUtils.VerifyPassword(inputpassword, accountPassword)) return false;
+            if (!WalletUtils.VerifyAmount(amount, isWithdrawal, _account)) return false;
+            if (!WalletUtils.VerifyAccount(_account)) return false;
+            else return true;
         }
     }
 }
